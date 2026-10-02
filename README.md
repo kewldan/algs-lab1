@@ -96,6 +96,24 @@
 
 Компилятор и флаги можно переопределить: `make a CXX=g++-14`.
 
+## Работа в CLion, VS Code и Visual Studio
+
+Для IDE в репозитории есть `CMakeLists.txt`: каждая задача — отдельная цель `a` … `i`, её можно запускать и отлаживать прямо из редактора.
+
+- **CLion:** `File → Open` и выбрать папку репозитория. Цели появятся в списке конфигураций запуска.
+- **VS Code:** поставить расширения C/C++ и CMake Tools, открыть папку и выбрать цель в нижней панели.
+- **Visual Studio:** `File → Open → Folder`.
+
+Тесты из IDE запускаются через CTest, проверка та же, что у `make`. Перед `ctest` задачу нужно собрать:
+
+```bash
+cmake -B cmake-build -DCMAKE_BUILD_TYPE=Release
+cmake --build cmake-build --target a
+ctest --test-dir cmake-build -R a --output-on-failure
+```
+
+В Debug-сборке лимиты времени и памяти не проверяются: без оптимизаций код работает в несколько раз медленнее.
+
 ## Как читать результат
 
 ```
@@ -149,6 +167,7 @@ tests/b/
 ```
 .
 ├── Makefile
+├── CMakeLists.txt    сборка для IDE
 ├── tasks/
 │   ├── a.cpp         заготовка, здесь пишется решение
 │   ├── b.cpp

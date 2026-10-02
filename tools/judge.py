@@ -4,6 +4,7 @@
 Запускается из Makefile, но можно и напрямую:
     python3 tools/judge.py a b c
     python3 tools/judge.py --build-only a
+    python3 tools/judge.py --binary path/to/a a
 """
 
 import argparse
@@ -268,7 +269,11 @@ def main():
     parser.add_argument("tasks", nargs="*", default=list(TASKS), help="буквы задач, по умолчанию все")
     parser.add_argument("--build-dir", default=str(ROOT / "build"))
     parser.add_argument("--build-only", action="store_true", help="только собрать")
-    parser.add_argument("--no-limits", action="store_true", help="не проверять время и память")
+    parser.add_argument(
+        "--limits", action=argparse.BooleanOptionalAction, default=True,
+        help="проверять лимиты времени и памяти (--no-limits отключает)",
+    )
+    parser.add_argument("--binary", help="готовый бинарник одной задачи, без сборки (для CTest)")
     args = parser.parse_args()
 
     cxx = os.environ.get("CXX", "c++")
@@ -278,10 +283,15 @@ def main():
     unknown = [t for t in args.tasks if t not in TASKS]
     if unknown:
         parser.error(f"нет такой задачи: {', '.join(unknown)}. Есть: {' '.join(TASKS)}")
+    if args.binary and len(args.tasks) != 1:
+        parser.error("с --binary указывается ровно одна задача")
 
     summary = []
     for task in args.tasks:
-        binary, error = build(task, build_dir, cxx, cxxflags)
+        if args.binary:
+            binary, error = Path(args.binary), None
+        else:
+            binary, error = build(task, build_dir, cxx, cxxflags)
         if args.build_only:
             if error:
                 print(error.rstrip(), file=sys.stderr)
@@ -294,7 +304,7 @@ def main():
             print("    " + error.rstrip().replace("\n", "\n    "))
             summary.append((task, 0, 0, "CE"))
         else:
-            passed, total, verdicts = judge_task(task, binary, not args.no_limits)
+            passed, total, verdicts = judge_task(task, binary, args.limits)
             worst = next((v for v in verdicts if v != "OK"), "OK")
             summary.append((task, passed, total, worst))
         print()

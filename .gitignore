@@ -4,3 +4,5 @@ build/
 .DS_Store
 __pycache__/
 *.dSYM/
+cmake-build*/
+out/
